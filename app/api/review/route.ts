@@ -1,12 +1,13 @@
 import { generateObject } from "ai";
 import { NextResponse } from "next/server";
 import { locateSpans } from "@/lib/annotate";
-import { getOpenAIModelId, getOpenAIProvider, hasOpenAIKey, withRetry } from "@/lib/ai";
+import { getAIModelId, getAIProvider, hasAIKey, withRetry } from "@/lib/ai";
 import { mockReview } from "@/lib/mock-review";
 import {
   reviewModelSchema,
   reviewRequestSchema,
   reviewResultSchemaForSentence,
+  INDEPENDENT_MODEL_SENTENCE_RULE,
   USER_SENTENCE_REWRITE_RULE,
   type ReviewResult,
 } from "@/lib/schema";
@@ -29,19 +30,19 @@ export async function POST(request: Request) {
 
   const { question, user_sentence } = parsed.data;
 
-  if (!hasOpenAIKey()) {
+  if (!hasAIKey(request)) {
     return NextResponse.json(mockReview(question, user_sentence));
   }
 
   try {
     const result = await withRetry(async (attempt) => {
-      const provider = getOpenAIProvider();
+      const provider = getAIProvider(request);
       const retryNote =
         attempt > 0
-          ? "\n上次的进阶句没有基于用户原句，或标亮 quote 不在原句里。请只在用户原句上做最小修改，quote 必须逐字复制原句片段。"
+          ? "\n请确保 upgrade 只对用户原句做最小修改，spans.quote 必须逐字复制原句片段；model_sentence 仍须是独立回应题目的示范句。"
           : "";
       const { object } = await generateObject({
-        model: provider.chat(getOpenAIModelId()),
+        model: provider.chat(getAIModelId(request)),
         schema: reviewModelSchema,
         system: `你是雅思学术句子教练。只评用户写下的 1–2 句（大约 50 词），不做整篇作文批改，不做翻译，也不要建成自动评分系统。
 按 Task 2 的四项来看这一两句，四项同等重要，各约占这则评语的四分之一：
@@ -51,6 +52,7 @@ export async function POST(request: Request) {
 - GRA 语法范围与准确：句式用得是否正确。从句和被动只用对了才算范围，用错就是准确度问题。简单句写对，好过复杂句写破。
 每一项都写 judgment（简短判定）、points（1–4 条具体加减分，引用用户原词）、suggestion（一条可改建议）。signal 只能是 plus、mixed 或 minus。不要输出雅思 0–9 档，不要输出总分。
 ${USER_SENTENCE_REWRITE_RULE}
+${INDEPENDENT_MODEL_SENTENCE_RULE}
 spans 只标用户原句里真实存在的片段。每条给出 kind（upgrade、grammar 或 spelling）、message、可选 suggestion，以及 quote。quote 必须是原句里的连续原文。不要填写字符下标，服务器会按 quote 定位。找不到原文就不要编这一条。
 cards 输出 0–3 张（collocation 或 pattern）。expression 必须出现在 source_sentence 里，source_sentence 来自这句进阶改写。exam_safe 必须为 true，style 必须为 academic。
 rewrite_prompt 用中文，要求用户基于自己的原句重写。不得编造数据，不得生成歌词、明星语录或媒体原句。`,

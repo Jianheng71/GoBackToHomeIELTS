@@ -2,7 +2,7 @@
 
 中文雅思备考工具，只练**句子级**学术写作：每次 1–2 句英文，大约 50 词。
 
-流程是：AI 动态出题 → 你写英文 → 按 Task 2 的 TR / CC / LR / GRA 看这一两句，并在原句上标出可升级处、语法和拼写 → 只给一句基于原句的进阶改写 → 必须重写 → 生成 1–3 张词伙 / 句型卡 → 按简化 SM-2 间隔复习。
+流程是：AI 动态出题 → 你写英文 → 按 Task 2 的 TR / CC / LR / GRA 看这一两句，并在原句上标出可升级处、语法和拼写 → 给一句基于原句的进阶改写和一句独立的高阶示范句 → 必须重写 → 生成 1–3 张词伙 / 句型卡 → 按简化 SM-2 间隔复习。
 
 这不是整篇作文批改，也不是翻译器。项目里**没有**分享卡、二维码或打卡图片导出。
 
@@ -35,11 +35,20 @@ npm start
 
 | 变量 | 说明 |
 |------|------|
-| `OPENAI_API_KEY` | OpenAI 或兼容网关的 API Key。留空则走程序化 mock |
-| `OPENAI_BASE_URL` | 可选。兼容端点的 Base URL |
-| `OPENAI_MODEL` | 可选。默认 `gpt-4o-mini` |
+| `AI_PROVIDER` | `auto`、`openai` 或 `dashscope`；默认 `auto`，按访问者地区选择 |
+| `AI_PROVIDER_FALLBACK` | `auto` 模式无法识别地区时的服务商；默认 `openai` |
+| `OPENAI_API_KEY` | OpenAI 或兼容网关的 API Key |
+| `OPENAI_BASE_URL` | OpenAI 兼容端点，可选 |
+| `OPENAI_MODEL` | OpenAI 模型名；默认 `gpt-4o-mini` |
+| `DASHSCOPE_API_KEY` | 阿里云百炼 API Key；选择 `dashscope` 时必填 |
+| `DASHSCOPE_BASE_URL` | 百炼 OpenAI 兼容端点；默认中国内地端点 |
+| `DASHSCOPE_MODEL` | 百炼模型名；默认 `qwen3.7-plus` |
 
-密钥只在服务端 API 路由里使用，不会写进浏览器。没有 Key 时，`/api/generate-question` 和 `/api/review` 返回 `is_mock: true`。题目由话题池和功能模板当场组合，仓库里没有固定种子题库文件。
+`AI_PROVIDER=auto` 时，根据可信部署平台提供的地区请求头自动选择：`x-vercel-ip-country=CN` 或 `cf-ipcountry=CN` 使用百炼，其它有效国家代码使用 OpenAI。请同时配置两家的 API Key；大陆以外的 OpenAI 使用范围仍受 OpenAI 支持地区限制。无法识别地区时使用 `AI_PROVIDER_FALLBACK`（默认 `openai`），本地开发可将它设为 `dashscope`。也可将 `AI_PROVIDER` 固定为 `openai` 或 `dashscope`，关闭自动选择。
+
+百炼默认使用 `https://dashscope.aliyuncs.com/compatible-mode/v1` 和支持 JSON Schema 结构化输出的 `qwen3.7-plus`。如使用业务空间专属域名或其他地域，请将 `DASHSCOPE_BASE_URL` 和 API Key 配成同一地域。百炼 API Key 可在[模型服务平台](https://bailian.console.aliyun.com/model/settings/api-key)创建，具体端点见[OpenAI 兼容接口文档](https://help.aliyun.com/zh/model-studio/compatibility-of-openai-with-dashscope)。
+
+密钥只在服务端 API 路由里使用，不会写进浏览器。所选服务商的 Key 未配置时，`/api/generate-question` 和 `/api/review` 返回 `is_mock: true`。题目由话题池和功能模板当场组合，仓库里没有固定种子题库文件。
 
 ## 无 Key 时怎么用
 
@@ -65,7 +74,7 @@ npm run build
 npm start
 ```
 
-在 Vercel 上导入仓库即可。把 `OPENAI_API_KEY`、`OPENAI_BASE_URL`、`OPENAI_MODEL` 配到项目环境变量。不配 Key 时，线上同样是演示题。
+在 Vercel 上导入仓库即可。把两家服务商对应的 API Key、端点和模型配到项目环境变量，保持 `AI_PROVIDER=auto` 即可按访问者地区路由。其他部署平台需提供并覆盖对应的可信地区请求头；无地区信息时按 `AI_PROVIDER_FALLBACK` 处理。不配当前所选服务商的 Key 时，线上同样是演示题。
 
 ## AI Prompt
 
@@ -82,7 +91,8 @@ npm start
 
 - `scores` 只有 `tr`、`cc`、`lr`、`gra`。每项有 `signal`（plus / mixed / minus）、`judgment`、`points`、`suggestion`。四项同等看待这一两句。不给雅思 0–9 档，也不给总分。
 - TR 看是否回应题目、立场是否清楚、句内有没有理由或因果。CC 看衔接是否自然，并扣机械套话。LR 看用词、搭配、词级和拼写。GRA 看句式是否用对。
-- `upgrade` 只有一句进阶版，必须改写用户原句：保留原意和主要结构，只做最小润色。没有稳妥版，也没有第二稿。
+- `upgrade` 仍只有一句进阶版，必须改写用户原句：保留原意和主要结构，只做最小润色。
+- `model_sentence` 是另一句独立回应题目的高阶示范，综合体现 TR / CC / LR / GRA；追求自然、准确的学术表达，不堆砌生僻词，也不承诺雅思分数。
 - `spans` 标在原句上，`kind` 为 `upgrade`、`grammar` 或 `spelling`。模型交 `quote`，服务器按原文算出 `start` / `end`。
 - 词伙卡 1–3 张，`exam_safe` 为 true，`style` 为 `academic`。
 - 不编造数据，不生成歌词、语录或媒体原句。

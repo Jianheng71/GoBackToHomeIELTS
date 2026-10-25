@@ -187,6 +187,21 @@ function topicHit(sentence: string, tag: string): boolean {
   return words.every((word) => lower.includes(word));
 }
 
+function mockModelSentence(question: QuestionCore): string {
+  const topic = question.topic_tags[0] ?? "this issue";
+  const examples: Record<QuestionCore["function"], string> = {
+    cause_effect: `When policies addressing ${topic} lack adequate safeguards, their immediate benefits may be outweighed by substantial long-term social costs.`,
+    concession: `Although measures addressing ${topic} may yield tangible benefits, their effectiveness ultimately depends on equitable implementation and proportionate safeguards.`,
+    contrast: `Whereas advocates of policies addressing ${topic} prioritise efficiency, critics question whether the resulting benefits are distributed equitably.`,
+    hedging: `Although policies addressing ${topic} may improve certain outcomes, their long-term efficacy is likely to depend on local circumstances and institutional capacity.`,
+    data_description: `The effects of ${topic} are likely to vary across socioeconomic groups, cautioning against broad generalisations about its overall impact.`,
+    opinion: `Governments should address ${topic} through evidence-informed policies that reconcile economic efficiency with distributive justice.`,
+    problem_solution: `To mitigate the challenges associated with ${topic}, policymakers should pair targeted regulation with transparent evaluation.`,
+    example_generalization: `The debate over ${topic} illustrates that reforms are most durable when institutional safeguards ensure their benefits are broadly shared.`,
+  };
+  return examples[question.function];
+}
+
 export function mockReview(question: QuestionCore, userSentence: string): ReviewResult {
   const trimmed = userSentence.trim();
   const wordCount = trimmed.split(/\s+/).filter(Boolean).length;
@@ -306,6 +321,7 @@ export function mockReview(question: QuestionCore, userSentence: string): Review
     },
     spans,
     upgrade: advancedText,
+    model_sentence: mockModelSentence(question),
     cards,
     rewrite_prompt: `请基于你的原句重写：保留原意和主要结构，只做必要的学术润色（${editSummary}），不要另写一句。`,
     is_mock: true,

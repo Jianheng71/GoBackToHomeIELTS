@@ -403,6 +403,15 @@ export function PracticeLoop() {
               <p className="mt-1 text-xs text-[var(--text-muted)]">只做最小修改，不另写新句子。</p>
               <p className="mt-2 leading-relaxed text-foreground">{review.upgrade}</p>
             </div>
+            <div className="rounded-lg border border-[var(--border-quiet)] bg-[var(--bg-elevated)]/50 p-3">
+              <p className="text-xs text-[var(--text-muted)]">
+                {review.is_mock ? "独立示范 · 演示句" : "AI 独立示范 · 高阶学术表达"}
+              </p>
+              <p className="mt-1 text-xs text-[var(--text-muted)]">
+                独立回应题目，示范 TR / CC / LR / GRA；参考高分表达，不代表分数承诺。
+              </p>
+              <p className="mt-2 leading-relaxed text-foreground">{review.model_sentence}</p>
+            </div>
             {review.cards.length > 0 && phase !== "done" ? (
               <div className="space-y-2">
                 <p className="text-sm font-medium text-foreground">词伙</p>
