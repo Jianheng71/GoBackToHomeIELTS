@@ -89,6 +89,9 @@ export const vocabCardSchema = z.object({
 export const USER_SENTENCE_REWRITE_RULE =
   "upgrade 只能有一句进阶版，而且必须改写用户原句：保留用户的意思和主要结构，只做学术润色或考试安全所必需的最小修改，从用户自己的用词出发。禁止编造无关新句，禁止用模板或库存例句整句替换，禁止再给稳妥版或第二稿。";
 
+export const INDEPENDENT_MODEL_SENTENCE_RULE =
+  "model_sentence 是另一条独立示范句，直接回应题目，不改写或依赖用户原句。用自然、准确的高阶学术词汇和有变化的复杂句式，综合体现 TR 任务回应明确、CC 逻辑衔接自然、LR 用词精确、GRA 结构多样且准确；可参考雅思高分及 GRE 学术表达，但不要生硬堆砌生僻词，不要声称这是实际分数，也不要编造数据或事实。只写一句。";
+
 function userRewriteField() {
   return z.string().min(1).describe(USER_SENTENCE_REWRITE_RULE);
 }
@@ -150,6 +153,7 @@ export const reviewResultSchema = z.object({
   scores: scoresSchema,
   spans: z.array(sentenceSpanSchema).max(8),
   upgrade: userRewriteField(),
+  model_sentence: z.string().min(1).max(500).describe(INDEPENDENT_MODEL_SENTENCE_RULE),
   cards: z.array(vocabCardSchema).min(0).max(3),
   rewrite_prompt: z.string().min(1),
   is_mock: z.boolean(),

@@ -1,6 +1,6 @@
 import { generateObject } from "ai";
 import { NextResponse } from "next/server";
-import { getOpenAIModelId, getOpenAIProvider, hasOpenAIKey, withRetry } from "@/lib/ai";
+import { getAIModelId, getAIProvider, hasAIKey, withRetry } from "@/lib/ai";
 import { isDuplicate, toRecent, type RecentQuestion } from "@/lib/dedupe";
 import { mockGenerateUnique } from "@/lib/mock-generator";
 import { combinedRecent, rememberQuestion } from "@/lib/recent-buffer";
@@ -34,19 +34,19 @@ export async function POST(request: Request) {
   const input = parsed.data;
   const recent = combinedRecent(input.recent_questions);
 
-  if (!hasOpenAIKey()) {
+  if (!hasAIKey(request)) {
     return NextResponse.json(finishMock(input, recent));
   }
 
   try {
     const question = await withRetry(async (attempt) => {
-      const provider = getOpenAIProvider();
+      const provider = getAIProvider(request);
       const retryNote =
         attempt > 0
           ? "\n上次题目与最近练习重复或未通过校验。请换一个话题标签和意思，严格按 schema 输出。"
           : "";
       const { object } = await generateObject({
-        model: provider.chat(getOpenAIModelId()),
+        model: provider.chat(getAIModelId(request)),
         schema: questionCoreSchema,
         system: `你是雅思学术写作的出题教练。只生成「句子级」练习题（用户写 1–2 句 / 约 50 词），不是整篇作文，不是翻译题。
 meaning_zh 是需要论证的观点（约 20–35 字），不是让用户逐字翻译的完整中文句子。

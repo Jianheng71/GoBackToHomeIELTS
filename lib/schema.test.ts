@@ -36,7 +36,7 @@ describe("schemas", () => {
     expect(question?.style).toBe("academic");
   });
 
-  it("accepts a mock review with four criteria, one upgrade, and located spans", () => {
+  it("accepts a mock review with four criteria, both sentence versions, and located spans", () => {
     const question = mockGenerateUnique({
       topic_domain: "work",
       function: "concession",
@@ -52,6 +52,8 @@ describe("schemas", () => {
     expect(isRewriteOfUserSentence(userSentence, parsed.upgrade)).toBe(true);
     expect(parsed.upgrade.toLowerCase()).toContain("remote work");
     expect(parsed.upgrade.toLowerCase()).not.toContain("digital literacy");
+    expect(parsed.model_sentence).toContain(question!.topic_tags[0]);
+    expect(parsed.model_sentence).not.toBe(parsed.upgrade);
     expect(parsed).not.toHaveProperty("analysis");
     expect(
       isRewriteOfUserSentence(
