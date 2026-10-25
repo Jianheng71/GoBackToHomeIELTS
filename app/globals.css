@@ -1,0 +1,89 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-void: #0e0b14;
+  --bg-surface: rgba(22, 18, 32, 0.88);
+  --bg-elevated: rgba(32, 26, 48, 0.94);
+
+  --glow-deep: #3d2a5c;
+  --glow-mid: #6e4a9e;
+  --glow-soft: #a78bfa;
+
+  --text-primary: #f4f2f8;
+  --text-secondary: rgba(244, 242, 248, 0.62);
+  --text-muted: rgba(244, 242, 248, 0.42);
+  --border-quiet: rgba(167, 139, 250, 0.18);
+
+  --ok: #4ade80;
+  --warn: #fbbf24;
+  --danger: #f87171;
+  --focus-ring: #c4b5fd;
+
+  --background: var(--bg-void);
+  --foreground: var(--text-primary);
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: var(--font-sans), "Noto Sans SC", system-ui, sans-serif;
+}
+
+.purple-bg {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-color: var(--bg-void);
+  background-image:
+    radial-gradient(
+      ellipse 80% 50% at 20% 10%,
+      rgba(61, 42, 92, 0.55),
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 70% 45% at 85% 75%,
+      rgba(110, 74, 158, 0.35),
+      transparent 55%
+    );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .purple-bg {
+    background-image: radial-gradient(
+      ellipse 90% 60% at 50% 40%,
+      rgba(61, 42, 92, 0.4),
+      transparent 70%
+    );
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition-property: opacity !important;
+    transition-duration: 150ms !important;
+  }
+}
+
+html[data-reduce-motion="true"] .purple-bg {
+  background-image: radial-gradient(
+    ellipse 90% 60% at 50% 40%,
+    rgba(61, 42, 92, 0.4),
+    transparent 70%
+  );
+}
+
+html[data-reduce-motion="true"] *,
+html[data-reduce-motion="true"] *::before,
+html[data-reduce-motion="true"] *::after {
+  animation: none !important;
+  transition-property: opacity !important;
+  transition-duration: 150ms !important;
+}
